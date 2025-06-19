@@ -1,5 +1,5 @@
 //URL base de la API RESTful 
-const url = 'https://crudcrud.com/api/a3c09c3939bd4a33b878db133c1c7e14/usuarios'
+const url = 'https://crudcrud.com/api/aa049052b32d4ddfbe417863403cdf49/usuarios'
 
 // Al cargar la página exitosamente, oculta el cuadro de diálogo y obtiene los objetos de la API
 window.onload = () => {
@@ -20,9 +20,7 @@ function loadObjects(){
                 reject(Error(request.statusText))
             }
         }
-        request.onerror = () => {
-            reject(Error('Error: unexpected network error'));
-        } 
+        request.onerror = () => reject(Error("Error de red ")) 
         request.send()
     })
 }
@@ -33,14 +31,13 @@ function getObjects() {
             var tbody = document.querySelector('tbody');
             tbody.innerHTML = '';
             response.forEach(object => {
-            if (object.email) { 
-                insertTr(object, true);
-            }
+                insertTr(object);
+            });
+        })
+        .catch(reason => {
+            swal("Error","Error al cargar el objeto: " + reason.message);
         });
-    })
-    .catch(reason => {
-        console.error(reason)
-    });
+        document.getElementById('name').focus();
 }
 
 //POST - Crear un nuevo recurso
@@ -56,19 +53,34 @@ function addObject() {
             gender: document.getElementById('gender').value 
         }; 
         request.onload = () => {
-                if(request.status == 200 || request.status == 201){
-                    resolve(JSON.parse(request.responseText))
-                } else {
-                    reject(Error(request.statusText))
-                }
+            if(request.status == 200 || request.status == 201){
+                resolve(JSON.parse(request.responseText))
+            } else {
+                reject(Error(request.statusText))
             }
+        }
         request.onerror = () => reject(Error("Error de red"))
         request.send(JSON.stringify(data)) 
     })
 }
 
-function insertTr(object, canChange) {
+function viewObject(object) {
+    document.getElementsByName('id2')[0].value = object._id;
+    document.getElementsByName('name2')[0].value = object.name;
+    document.getElementsByName('lastName2')[0].value = object.lastName;
+    document.getElementsByName('email2')[0].value = object.email;
+    document.getElementsByName('gender2')[0].value = object.gender;
+    $('#popUp').dialog({
+        modal: true,
+        width: 400,
+        height: 350,
+        closeText: ''
+    }).css('font-size', '15px')
+}
+
+function insertTr(object) {
     const tbody = document.querySelector('tbody');
+    
     const row = tbody.insertRow();
     row.setAttribute('id', object._id)
     
@@ -87,23 +99,19 @@ function insertTr(object, canChange) {
     var genderCell = row.insertCell()
     genderCell.innerHTML = object.gender;
 
-    if (canChange) {
-        const viewCell = row.insertCell()
-        const viewButton = document.createElement('button');
-        viewButton.className = 'btn btn-view';
-        viewButton.textContent = 'VER';
-        viewButton.addEventListener('click',() => viewObject(object));
-
-        viewCell.appendChild(viewButton); 
+    const viewCell = row.insertCell()
+    const viewButton = document.createElement('button');
+    viewButton.className = 'btn btn-view';
+    viewButton.textContent = 'VER';
+    viewButton.addEventListener('click',() => viewObject(object));
+    viewCell.appendChild(viewButton); 
         
-        const delCell = row.insertCell();
-        const delButton = document.createElement('button');
-        delButton.className = 'btn';
-        delButton.textContent = 'BORRAR';
-        delButton.addEventListener('click', () => deleteObject(object._id));
-        
-        delCell.appendChild(delButton);
-    }
+    const delCell = row.insertCell();
+    const delButton = document.createElement('button');
+    delButton.className = 'btn';
+    delButton.textContent = 'BORRAR';
+    delButton.addEventListener('click', () => deleteObject(object._id));        
+    delCell.appendChild(delButton);
     clearInputs()
 }
 
@@ -119,15 +127,22 @@ function saveObject() {
     ) {        
             addObject()
                 .then((response) => {
-                    insertTr(response, true);  
-                    swal("Buen trabajo!", "Usuario agregado satisfactoriamente.", "success");               
+                    insertTr(response);  
+                    swal("Buen trabajo!", "Usuario agregado satisfactoriamente.", "success").then(() => {
+                        document.getElementById('name').focus();  
+                    });
+                               
                 })
                 .catch(reason => {
-                    alert('Error: '+ reason.message);
+                    swal("Error","Error al guardar el objeto: " + reason.message).then(() => {
+                        document.getElementById('name').focus(); 
+                    });
                 });
     } else {
-        swal("Error", "Por favor, complete todos los campos.", "error");
-    }
+        swal("Error", "Por favor, complete todos los campos.", "error").then(() => {
+            document.getElementById('name').focus(); 
+        });     
+    }          
 }
 
 //DELETE - Eliminar un recurso existente
@@ -155,14 +170,19 @@ function deleteObject(id) {
             rows.forEach(row => {
                 if (row.getAttribute('id') === id.toString()) {
                     row.remove();
-                    swal("Usuario eliminado!", "El usuario ha sido eliminado correctamente.", "success");
-                    clearInputs()
-                }
-            })
+                    swal("Usuario eliminado!", "El usuario ha sido eliminado correctamente.", "success").then(() => {
+                        clearInputs()
+                        document.getElementById('name').focus();  
+                    
+              })
+        }
         })
+    })
         .catch(reason => {
-            alert('Error al eliminar el objeto: ' + reason.message);
-        });
+            swal("Error","Error al eliminar el objeto: " + reason.message).then(() => {
+                document.getElementById('name').focus();  
+        })
+    })
 }
 
 //PUT - Actualizar un recurso existente
@@ -189,9 +209,7 @@ function modifyObject() {
                 reject(Error(request.statusText))
             }
         }
-        request.onerror = () => {
-            reject(Error("Error de red"))
-        }
+        request.onerror = () => reject(Error("Error de red "))
         request.send(JSON.stringify(data))
     })
 }
@@ -223,26 +241,20 @@ function updateObject() {
                 }
                 $('#popUp').dialog('close');
                 clearInputs();
-                swal("Usuario actualizado!", "El usuario ha sido actualizado correctamente.", "success");
+                swal("Usuario eliminado!", "El usuario ha sido eliminado correctamente.", "success").then(() => {
+                    clearInputs()
+                    document.getElementById('name').focus();  
+                
+            }) 
             })
             .catch(reason => {
-                alert('Error al actualizar el objeto: ' + reason.message);
+                swal("Error","Error al guardar el objeto: " + reason.message).then(() => {
+                    document.getElementById('name').focus(); 
+                });
             });
-        } else {
-            swal("Error", "Por favor, complete todos los campos.", "error");
-        }
-}
-
-function viewObject(object) {
-    document.getElementsByName('id2')[0].value = object._id;
-    document.getElementsByName('name2')[0].value = object.name;
-    document.getElementsByName('lastName2')[0].value = object.lastName;
-    document.getElementsByName('email2')[0].value = object.email;
-    document.getElementsByName('gender2')[0].value = object.gender;
-    $('#popUp').dialog({
-        modal: true,
-        width: 400,
-        height: 350,
-        closeText: ''
-    }).css('font-size', '15px')
+            } else {
+            swal("Error", "Por favor, complete todos los campos.", "error").then(() => {
+            document.getElementById('name').focus(); 
+        });     
+    }    
 }
