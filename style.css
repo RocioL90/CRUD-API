@@ -22,7 +22,7 @@ th, td {
 th {
     background-color: var(--primary-color);
     color: white;
-    text-align: left
+    /*text-align: left*/
 }
 #popUp {
     overflow-x: hidden
@@ -34,7 +34,7 @@ label {
 
 /* botones */
 .btn {
-    width: 100px;
+    width: 120px;
     padding: 10px;
     color: white;
     background-color: var(--primary-color);
@@ -55,7 +55,7 @@ label {
 } 
 
 .inputPopUp {
-    text-align: right;
+    text-align: left;
 
 
 }
